@@ -1,26 +1,21 @@
-CC     = gcc
-CFLAGS = -std=gnu99 -ggdb3 -pthread -Wall
+SHELL   = /bin/bash
+CC      = gcc
+CFLAGS  = -std=gnu99 -ggdb3 -lpthread -Wall
 
-all: produtor-slock \
-	consumidor-slock \
-	produtor-sema \
-	consumidor-sema
+OUTDIR  = ./bin
+SRCDIR  = ./src
+TARGETS = $(addprefix ${OUTDIR}/,prod-lck cons-lck prod-sem cons-sem)
 
-produtor-slock:src/produtor-slock.c
-	@mkdir -p bin
-	${CC} ${CFLAGS} -o ./bin/$@ $^
+.PHONY: all
+all: ${TARGETS}
 
-consumidor-slock:src/consumidor-slock.c
-	@mkdir -p bin
-	${CC} ${CFLAGS} -o ./bin/$@ $^
+${OUTDIR}/%: ${SRCDIR}/%.c
+	${CC} ${CFLAGS} -o $@ $<
 
-produtor-sema:src/produtor-sema.c
-	@mkdir -p bin
-	${CC} ${CFLAGS} -o ./bin/$@ $^
+${TARGETS}: | ${OUTDIR}
 
-consumidor-sema:src/consumidor-sema.c
-	@mkdir -p bin
-	${CC} ${CFLAGS} -o ./bin/$@ $^
+${OUTDIR}:; $([ -d $@ ] || mkdir $@)
 
+.PHONY: clean
 clean:
-	rm -r bin
+	rm -r ${OUTDIR}
