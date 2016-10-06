@@ -1,2 +1,6 @@
+*.swp
+*.tmp
 bin
+data
+plot.svg
 src/*.swp
