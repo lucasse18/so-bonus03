@@ -18,7 +18,7 @@ clock_t begin, end;
 
 void terminate(int arg) {
   end = clock();
-  printf("%lu, %lf\n", bytes/1024, (double)(end - begin)/CLOCKS_PER_SEC);
+  printf("%lu, %lf\n", bytes/1048576, (double)(end - begin)/CLOCKS_PER_SEC);
   exit(0);
 }
 

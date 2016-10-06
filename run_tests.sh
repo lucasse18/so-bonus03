@@ -6,7 +6,7 @@ set -e
 # evitar valores muito grandes de tempo (overflow nao verificado)
 # tempo total de execucao do experimento: (2 * (SAMPLES * SEC)) segundos
 SEC="10"
-SAMPLES="20"
+SAMPLES="6"
 
 
 # definicao de funcoes
@@ -47,23 +47,20 @@ plot() {
 
   gnuplot << EndOfFile
   set datafile separator ","
-  set title "spin lock x semaphore"
+  set title "Spin Lock x Semaphore at ${SEC}s real time"
   set terminal svg enhanced size 500,500 background rgb 'white'
 
-  set output "plot_comparacao.svg"
+  set output "plot.svg"
   set bmargin 3
-  set xlabel "Dados (kB)"
-  set ylabel "Tempo (s)"
-  #set xtics 1
-  #set ytics 0.02
-  #set yrange [0:0.5]
-  #set pointintervalbox 3
+  set xlabel "Data (MiB)"
+  set ylabel "CPU time (s)"
   set grid
+  set key right bottom
 
   set style line 1 lc rgb '$COLOR_LCK' lt 1 lw 1 pt 7 ps 0.5
   set style line 2 lc rgb '$COLOR_SEM' lt 1 lw 1 pt 7 ps 0.5
-  plot "./data/lck.csv" with line ls 1 t 'spin lock',\
-       "./data/sem.csv" with line ls 2 t 'semaphore'
+  plot "./data/lck.csv" with points ls 1 t 'spin lock',\
+       "./data/sem.csv" with points ls 2 t 'semaphore'
 EndOfFile
 }
 
@@ -75,14 +72,14 @@ if [[ $1 != "plot" ]]; then
   check make
 
   # tenta executar o Makefile do projeto
-  make -s || die "[ERROR]: make retornou codigo ${?}."
+  make || die "[ERROR]: make retornou codigo ${?}."
 
   # cria o diretorio data caso nao exista
   [ -d ./data ] || mkdir ./data
 
   # inicializa arquivos de saida
-  echo "# bytes,cpu_time@${SEC}s" > ./data/sem.csv
-  echo "# bytes,cpu_time@${SEC}s" > ./data/lck.csv
+  echo "# MiB,cpu_time@${SEC}s" > ./data/sem.csv
+  echo "# MiB,cpu_time@${SEC}s" > ./data/lck.csv
   run lck
   run sem
 fi
