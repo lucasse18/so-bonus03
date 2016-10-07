@@ -13,12 +13,12 @@ typedef struct shared_area{
   char buffer[BUFF_SZ];
 } sa_t;
 
-unsigned long bytes = 0;
+unsigned long blocks = 0;
 clock_t begin, end;
 
 void terminate(int arg) {
   end = clock();
-  printf("%lu, %lf\n", bytes/1048576, (double)(end - begin)/CLOCKS_PER_SEC);
+  printf("%lu, %lf\n", (blocks * BUFF_SZ)/1048576, (double)(end - begin)/CLOCKS_PER_SEC);
   exit(0);
 }
 
@@ -34,14 +34,15 @@ int main() {
   //FIXME possibilidade de inicializacao duplicada
   sa_ptr->num = 0;
 
-  size_t i = 0;
+  size_t i;
   for(;;) {
-    if (sa_ptr->num <  BUFF_SZ) {
-      sa_ptr->buffer[i] = '#';
-      i = (i+1)%BUFF_SZ;
-      sa_ptr->num++;
+    static size_t buffsz_minus1 = BUFF_SZ - 1;
+    if(sa_ptr->num < buffsz_minus1) {
+      for(i = sa_ptr->num; i < BUFF_SZ; i++)
+        sa_ptr->buffer[i] = '#';
+      sa_ptr->num = buffsz_minus1;
+      blocks++;
     }
-    bytes++;
   }
   return 0;
 }
