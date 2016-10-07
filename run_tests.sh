@@ -5,15 +5,15 @@ set -e
 # -----------------------------
 # evitar valores muito grandes de tempo (overflow nao verificado)
 # tempo total de execucao do experimento: (2 * (SAMPLES * SEC)) segundos
-SEC="10"
-SAMPLES="6"
+SEC="15"
+SAMPLES="15"
 
 
 # definicao de funcoes
 # --------------------
 die() {
   # imprime seus argumentos na saida padrao de erros (2) e executa 'exit 1'
-  echo "${@}" >&2;
+  echo "[ERROR]: ${@}" >&2;
   exit 1;
 }
 
@@ -28,14 +28,14 @@ run() {
     # imprime o progresso no formato "implementacao (iter_concluidas)/(total_iter)"
     echo -ne "\r${1} ${i}/${SAMPLES}"
     # executa produtor e consumidor em "background"
-    ./bin/prod-${1} > prod.tmp &
+    ./bin/prod-${1} > /tmp/prod.tmp &
     PROD_PID=$!
-    ./bin/cons-${1} > cons.tmp &
+    ./bin/cons-${1} > /tmp/cons.tmp &
     CONS_PID=$!
     # envia SIGTERM aos programas apos SEC segundos
     sleep ${SEC} && kill ${PROD_PID} ${CONS_PID}
     # anexa resultados ao arquivo de saida
-    echo -e "$(cat prod.tmp)\n$(cat cons.tmp)" >> ./data/${1}.csv
+    echo -e "$(cat /tmp/prod.tmp)\n$(cat /tmp/cons.tmp)" >> ./data/${1}.csv
   }
   echo -e "\r${1} ${SAMPLES}/${SAMPLES}"
 }
@@ -50,7 +50,13 @@ plot() {
   set title "Spin Lock x Semaphore at ${SEC}s real time"
   set terminal svg enhanced size 500,500 background rgb 'white'
 
+  set output "/dev/null"
+  plot "./data/lck.csv" with points ls 1 t 'spin lock',\
+       "./data/sem.csv" with points ls 2 t 'semaphore'
+
   set output "plot.svg"
+  set yrange [GPVAL_Y_MIN:GPVAL_DATA_Y_MAX]
+
   set bmargin 3
   set xlabel "Data (MiB)"
   set ylabel "CPU time (s)"
@@ -68,11 +74,11 @@ EndOfFile
 # "entry point" do script (a execucao comeca aqui)
 # ------------------------------------------------
 # executa cada implementacao se o script nao foi executado com o argumento 'plot'
-if [[ $1 != "plot" ]]; then
+if [[ ${1} != "plot" ]]; then
   check make
 
   # tenta executar o Makefile do projeto
-  make || die "[ERROR]: make retornou codigo ${?}."
+  make || die "make retornou codigo ${?}."
 
   # cria o diretorio data caso nao exista
   [ -d ./data ] || mkdir ./data
@@ -83,10 +89,6 @@ if [[ $1 != "plot" ]]; then
   run lck
   run sem
 fi
-
-# remove arquivos temporarios caso existam
-[ -f prod.tmp ] && rm prod.tmp
-[ -f cons.tmp ] && rm cons.tmp
 
 check gnuplot
 plot
